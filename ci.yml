@@ -1,0 +1,34 @@
+name: FreshCart CI 
+ 
+on: 
+  push: 
+    branches: [main] 
+  pull_request: 
+    branches: [main] 
+ 
+jobs: 
+  quality-checks: 
+    runs-on: ubuntu-latest 
+    steps: 
+      - name: Check out code 
+        uses: actions/checkout@v7 
+ 
+      - name: No merge conflict markers 
+        run: | 
+          if grep -rnE '^(<<<<<<<|=======|>>>>>>>)' \ 
+            --include='*.html' --include='*.css' --include='*.js' .; then 
+            echo "Conflict markers found - resolve them before merging" 
+            exit 1 
+          fi 
+ 
+      - name: No secrets committed 
+        run: test ! -f .env 
+ 
+      - name: Storefront shows the cart total 
+        run: grep -q 'id="total"' index.html 
+ 
+      - name: JavaScript syntax check 
+        run: node --check app.js 
+ 
+      - name: Bread price regression check 
+        run: grep -qE 'bread:[[:space:]]*45' app.js 
